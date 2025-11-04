@@ -1,0 +1,22 @@
+<div class="user-container">
+  <div *ngIf="!isLoggedIn" class="login-card">
+    <h2>User Login</h2>
+    <form (ngSubmit)="login()">
+      <input type="text" placeholder="Username" [(ngModel)]="username" name="username" required />
+      <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required />
+      <button type="submit">Login</button>
+    </form>
+    <button class="forgot-btn" (click)="forgotPassword()">Forgot Password?</button>
+  </div>
+
+  <div *ngIf="isLoggedIn" class="change-pass-card">
+    <!-- 🔹 Logout button -->
+    <div class="logout-bar">
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+
+    <h2>Change Password</h2>
+    <input type="password" placeholder="New Password" [(ngModel)]="newPassword" />
+    <button (click)="changePassword()">Update Password</button>
+  </div>
+</div>

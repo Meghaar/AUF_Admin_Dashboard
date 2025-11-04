@@ -1,0 +1,72 @@
+.admin-container {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  font-family: "Segoe UI", sans-serif;
+}
+
+h1 {
+  text-align: center;
+  color: #004b8d;
+  margin-bottom: 20px;
+}
+
+.login-section,
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+input {
+  width: 80%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #0078d7;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #005a9e;
+}
+
+.add-user,
+.reset-requests {
+  width: 100%;
+  text-align: center;
+  margin-top: 25px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  background: #f4f4f4;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.empty {
+  color: #888;
+  font-style: italic;
+}
