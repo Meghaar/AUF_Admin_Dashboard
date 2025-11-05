@@ -1,0 +1,37 @@
+<div class="admin-container">
+  <h1>Admin Dashboard</h1>
+
+  <!-- LOGIN SECTION -->
+  <div *ngIf="!isLoggedIn" class="login-section">
+    <h2>Admin Login</h2>
+    <input type="text" placeholder="Admin Username" [(ngModel)]="username" />
+    <input type="password" placeholder="Password" [(ngModel)]="password" />
+    <button (click)="login()">Login</button>
+  </div>
+
+  <!-- DASHBOARD SECTION -->
+  <div *ngIf="isLoggedIn" class="dashboard">
+    <!-- 🔹 Logout button on top-right -->
+    <div class="logout-bar">
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+
+    <section class="add-user">
+      <h2>Create New User</h2>
+      <input type="text" placeholder="New Username" [(ngModel)]="newUsername" />
+      <input type="password" placeholder="New Password" [(ngModel)]="newPassword" />
+      <button (click)="addUser()">Create User</button>
+    </section>
+
+    <section class="reset-requests">
+      <h2>Password Reset Requests</h2>
+      <div *ngIf="resetRequests.length === 0" class="empty">No reset requests.</div>
+      <ul>
+        <li *ngFor="let user of resetRequests">
+          <span>{{ user }}</span>
+          <button (click)="resetPassword(user)">Reset Password</button>
+        </li>
+      </ul>
+    </section>
+  </div>
+</div>
