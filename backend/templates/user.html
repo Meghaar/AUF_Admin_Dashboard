@@ -1,0 +1,111 @@
+<!-- templates/user.html -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>User Dashboard</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    .section { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+    label { display: inline-block; width: 120px; }
+    input { margin: 5px; padding: 5px; }
+    button { padding: 8px 15px; margin: 5px; }
+    .message { padding: 10px; margin: 10px 0; }
+    .success { background: #d4ffd4; }
+    .error { background: #ffd4d4; }
+  </style>
+</head>
+<body>
+  <h2>User Dashboard</h2>
+  <p id="who"></p>
+
+  <div class="section">
+    <h3>Change Password</h3>
+    <form id="changeForm">
+      <div>
+        <label>Old Password:</label>
+        <input type="password" id="old" required />
+      </div>
+      <div>
+        <label>New Password:</label>
+        <input type="password" id="new" required />
+      </div>
+      <button type="submit">Change Password</button>
+    </form>
+    <div id="changeMsg"></div>
+  </div>
+
+  <div class="section">
+    <h3>Forgot Password</h3>
+    <p>Request admin to reset your password</p>
+    <form id="forgotForm">
+      <div>
+        <label>Username:</label>
+        <input type="text" id="fusername" required />
+      </div>
+      <button type="submit">Send Request</button>
+    </form>
+    <div id="forgotMsg"></div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+      window.location = '/';
+    } else {
+      document.getElementById('who').innerText = 'Hello, ' + user.username;
+    }
+
+    // Change Password
+    document.getElementById('changeForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/change_password', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': 'Bearer ' + token 
+        },
+        body: JSON.stringify({ 
+          old_password: document.getElementById('old').value, 
+          new_password: document.getElementById('new').value 
+        })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        showMessage('changeMsg', data.message, 'success');
+        document.getElementById('changeForm').reset();
+      } else {
+        showMessage('changeMsg', data.error, 'error');
+      }
+    });
+
+    // Forgot Password Request
+    document.getElementById('forgotForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const username = document.getElementById('fusername').value;
+      const res = await fetch('/api/forgot_request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        showMessage('forgotMsg', data.message, 'success');
+        document.getElementById('forgotForm').reset();
+      } else {
+        showMessage('forgotMsg', data.error, 'error');
+      }
+    });
+
+    function showMessage(elementId, message, type) {
+      const element = document.getElementById(elementId);
+      element.innerHTML = message;
+      element.className = `message ${type}`;
+      element.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
