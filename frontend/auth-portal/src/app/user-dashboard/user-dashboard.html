@@ -1,22 +1,189 @@
 <div class="user-container">
-  <div *ngIf="!isLoggedIn" class="login-card">
-    <h2>User Login</h2>
-    <form (ngSubmit)="login()">
-      <input type="text" placeholder="Username" [(ngModel)]="username" name="username" required />
-      <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required />
-      <button type="submit">Login</button>
-    </form>
-    <button class="forgot-btn" (click)="forgotPassword()">Forgot Password?</button>
+  <!-- Login Screen -->
+  <div *ngIf="!isLoggedIn" class="login-screen">
+    <div class="login-card">
+      <h2>User Login</h2>
+      <form (ngSubmit)="login()">
+        <div class="form-group">
+          <label>Username</label>
+          <input 
+            type="text" 
+            [(ngModel)]="username" 
+            name="username"
+            placeholder="Enter your username"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input 
+            type="password" 
+            [(ngModel)]="password" 
+            name="password"
+            placeholder="Enter your password"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
+        
+        <!-- Error Message -->
+        <div *ngIf="loginError" class="error-message">
+          {{ loginError }}
+        </div>
+        
+        <button type="submit" class="btn-primary" [disabled]="isLoading">
+          {{ isLoading ? 'Logging in...' : 'Login' }}
+        </button>
+        
+        <div class="forgot-password-link">
+          <a (click)="openForgotPasswordModal()">Forgot Password?</a>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <div *ngIf="isLoggedIn" class="change-pass-card">
-    <!-- 🔹 Logout button -->
-    <div class="logout-bar">
-      <button class="logout-btn" (click)="logout()">Logout</button>
-    </div>
+  <!-- User Dashboard -->
+  <div *ngIf="isLoggedIn" class="dashboard">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-brand">
+        <h2>User Dashboard</h2>
+      </div>
+      <div class="nav-links">
+        <div class="user-info">
+          <span class="user-icon">👤</span>
+          <span class="username-display">{{ username }}</span>
+        </div>
+        <button (click)="openChangePasswordModal()" class="nav-btn">
+          <span>Change Password</span>
+        </button>
+        <button (click)="logout()" class="nav-btn logout-btn">
+          <span>Logout</span>
+        </button>
+      </div>
+    </nav>
 
-    <h2>Change Password</h2>
-    <input type="password" placeholder="New Password" [(ngModel)]="newPassword" />
-    <button (click)="changePassword()">Update Password</button>
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="welcome-section">
+        <h1>Welcome, {{ username }}!</h1>
+        <p>You are now logged in to your dashboard.</p>
+      </div>
+
+      <div class="info-cards">
+        <div class="info-card">
+          <h3>🔐 Account Security</h3>
+          <p>Keep your account secure by regularly updating your password.</p>
+          <button (click)="openChangePasswordModal()" class="card-btn">Change Password</button>
+        </div>
+
+        <div class="info-card">
+          <h3>❓ Need Help?</h3>
+          <p>If you forgot your password, you can request a reset from the admin.</p>
+          <button (click)="openForgotPasswordModal()" class="card-btn">Request Password Reset</button>
+        </div>
+
+        <div class="info-card">
+          <h3>📊 Your Activity</h3>
+          <p>View your recent activity and account information.</p>
+          <button class="card-btn">View Activity</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div *ngIf="showForgotPasswordModal" class="modal-overlay" (click)="closeForgotPasswordModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Forgot Password</h3>
+        <button class="close-btn" (click)="closeForgotPasswordModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="info-text">Submit a password reset request to the admin. You will receive a new password via email.</p>
+        
+        <!-- Error Message -->
+        <div *ngIf="forgotPasswordError" class="error-message">
+          {{ forgotPasswordError }}
+        </div>
+        
+        <div class="form-group">
+          <label>Username</label>
+          <input 
+            type="text" 
+            [(ngModel)]="forgotPasswordUsername" 
+            placeholder="Enter your username"
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input 
+            type="email" 
+            [(ngModel)]="forgotPasswordEmail" 
+            placeholder="Enter your email address"
+            [disabled]="isLoading"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeForgotPasswordModal()" [disabled]="isLoading">Cancel</button>
+        <button class="btn-primary" (click)="submitForgotPassword()" [disabled]="isLoading">
+          {{ isLoading ? 'Submitting...' : 'Submit Request' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div *ngIf="showChangePasswordModal" class="modal-overlay" (click)="closeChangePasswordModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Change Password</h3>
+        <button class="close-btn" (click)="closeChangePasswordModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Error Message -->
+        <div *ngIf="changePasswordError" class="error-message">
+          {{ changePasswordError }}
+        </div>
+        
+        <div class="form-group">
+          <label>Old Password</label>
+          <input 
+            type="password" 
+            [(ngModel)]="oldPassword" 
+            placeholder="Enter old password"
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input 
+            type="password" 
+            [(ngModel)]="newPassword" 
+            placeholder="Enter new password"
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input 
+            type="password" 
+            [(ngModel)]="confirmPassword" 
+            placeholder="Confirm new password"
+            [disabled]="isLoading"
+          />
+        </div>
+        <p class="info-text">Password must be at least 6 characters long.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeChangePasswordModal()" [disabled]="isLoading">Cancel</button>
+        <button class="btn-primary" (click)="changePassword()" [disabled]="isLoading">
+          {{ isLoading ? 'Changing...' : 'Change Password' }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>

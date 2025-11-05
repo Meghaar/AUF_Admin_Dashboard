@@ -1,6 +1,6 @@
 # admin.py
 from flask import request, jsonify
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash,check_password_hash
 from auth import admin_required
 from db_init import get_db
 import datetime

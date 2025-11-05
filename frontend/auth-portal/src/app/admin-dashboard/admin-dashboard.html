@@ -1,37 +1,351 @@
 <div class="admin-container">
-  <h1>Admin Dashboard</h1>
-
-  <!-- LOGIN SECTION -->
-  <div *ngIf="!isLoggedIn" class="login-section">
-    <h2>Admin Login</h2>
-    <input type="text" placeholder="Admin Username" [(ngModel)]="username" />
-    <input type="password" placeholder="Password" [(ngModel)]="password" />
-    <button (click)="login()">Login</button>
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Processing...</p>
   </div>
 
-  <!-- DASHBOARD SECTION -->
-  <div *ngIf="isLoggedIn" class="dashboard">
-    <!-- 🔹 Logout button on top-right -->
-    <div class="logout-bar">
-      <button class="logout-btn" (click)="logout()">Logout</button>
+  <!-- Login Screen -->
+  <div *ngIf="!isLoggedIn" class="login-screen">
+    <div class="login-card">
+      <h2>Admin Login</h2>
+      <form (ngSubmit)="login()">
+        <div class="form-group">
+          <label>Username</label>
+          <input
+            type="text"
+            [(ngModel)]="username"
+            name="username"
+            placeholder="Enter username"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="Enter password"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
+        <button type="submit" class="btn-primary" [disabled]="isLoading">
+          {{ isLoading ? 'Logging in...' : 'Login' }}
+        </button>
+       
+        <!-- Demo Credentials -->
+        <div class="demo-info">
+          <p>Default Admin Credentials:</p>
+          <div class="demo-creds">
+            <strong>Username:</strong> admin<br>
+            <strong>Password:</strong> admin123
+          </div>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <section class="add-user">
-      <h2>Create New User</h2>
-      <input type="text" placeholder="New Username" [(ngModel)]="newUsername" />
-      <input type="password" placeholder="New Password" [(ngModel)]="newPassword" />
-      <button (click)="addUser()">Create User</button>
-    </section>
+  <!-- Admin Dashboard -->
+  <div *ngIf="isLoggedIn" class="dashboard">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-brand">
+        <h2>Admin Dashboard</h2>
+      </div>
+      <div class="nav-links">
+        <button (click)="openUpdateCredentialsModal()" class="nav-btn">
+          <span>🔑 Update Credentials</span>
+        </button>
+        <button (click)="openCreateUserModal()" class="nav-btn">
+          <span>➕ Create User</span>
+        </button>
+        <button (click)="openUsersListModal()" class="nav-btn">
+          <span>👥 View Users ({{ getTotalUsers() }})</span>
+        </button>
+        <button (click)="openResetPasswordModal()" class="nav-btn">
+          <span>🔄 Reset Passwords</span>
+          <span *ngIf="resetRequests.length > 0" class="badge">{{ resetRequests.length }}</span>
+        </button>
+        <button (click)="logout()" class="nav-btn logout-btn">
+          <span>🚪 Logout</span>
+        </button>
+      </div>
+    </nav>
 
-    <section class="reset-requests">
-      <h2>Password Reset Requests</h2>
-      <div *ngIf="resetRequests.length === 0" class="empty">No reset requests.</div>
-      <ul>
-        <li *ngFor="let user of resetRequests">
-          <span>{{ user }}</span>
-          <button (click)="resetPassword(user)">Reset Password</button>
-        </li>
-      </ul>
-    </section>
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="welcome-section">
+        <h1>Welcome, {{ currentAdminUsername }}!</h1>
+        <p>Manage users and handle password reset requests from this dashboard.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <h3>Total Users</h3>
+          <p class="stat-number">{{ getTotalUsers() }}</p>
+          <p class="stat-label">Including Admin</p>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔄</div>
+          <h3>Reset Requests</h3>
+          <p class="stat-number">{{ resetRequests.length }}</p>
+          <p class="stat-label">Pending Actions</p>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <h3>Active Users</h3>
+          <p class="stat-number">{{ getTotalUsers() > 0 ? getTotalUsers() - 1 : 0 }}</p>
+          <p class="stat-label">Non-Admin Users</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+          <button class="action-btn" (click)="openCreateUserModal()">
+            <span class="action-icon">➕</span>
+            <span class="action-text">Create New User</span>
+          </button>
+          <button class="action-btn" (click)="openResetPasswordModal()">
+            <span class="action-icon">🔄</span>
+            <span class="action-text">Handle Reset Requests</span>
+          </button>
+          <button class="action-btn" (click)="openUsersListModal()">
+            <span class="action-icon">📋</span>
+            <span class="action-text">View All Users</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Credentials Modal -->
+  <div *ngIf="showUpdateCredentialsModal" class="modal-overlay" (click)="closeUpdateCredentialsModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>🔑 Update Admin Credentials</h3>
+        <button class="close-btn" (click)="closeUpdateCredentialsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <strong>⚠️ Important:</strong> After updating, you must use the new credentials for your next login.
+        </div>
+        <div class="form-group">
+          <label>Current Password *</label>
+          <input
+            type="password"
+            [(ngModel)]="currentPassword"
+            placeholder="Enter current password"
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>New Username (optional)</label>
+          <input
+            type="text"
+            [(ngModel)]="newAdminUsername"
+            placeholder="Enter new username or leave blank"
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>New Password (optional)</label>
+          <input
+            type="password"
+            [(ngModel)]="newAdminPassword"
+            placeholder="Enter new password or leave blank"
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group" *ngIf="newAdminPassword">
+          <label>Confirm New Password</label>
+          <input
+            type="password"
+            [(ngModel)]="confirmAdminPassword"
+            placeholder="Confirm new password"
+            [disabled]="isLoading"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeUpdateCredentialsModal()" [disabled]="isLoading">Cancel</button>
+        <button class="btn-primary" (click)="updateAdminCredentials()" [disabled]="isLoading">
+          {{ isLoading ? 'Updating...' : 'Update Credentials' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create User Modal -->
+  <div *ngIf="showCreateUserModal" class="modal-overlay" (click)="closeCreateUserModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>➕ Create New User</h3>
+        <button class="close-btn" (click)="closeCreateUserModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <strong>ℹ️ Note:</strong> These credentials will be displayed after creation. Please share them with the user securely.
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input
+            type="text"
+            [(ngModel)]="newUsername"
+            placeholder="Enter username"
+            [disabled]="isLoading"
+          />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            [(ngModel)]="newPassword"
+            placeholder="Enter password"
+            [disabled]="isLoading"
+          />
+        </div>
+        <p class="info-text">💡 The user will be able to login immediately with these credentials.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCreateUserModal()" [disabled]="isLoading">Cancel</button>
+        <button class="btn-primary" (click)="createUser()" [disabled]="isLoading">
+          {{ isLoading ? 'Creating...' : 'Create User' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users List Modal -->
+  <div *ngIf="showUsersListModal" class="modal-overlay" (click)="closeUsersListModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>👥 All Users ({{ getTotalUsers() }})</h3>
+        <button class="close-btn" (click)="closeUsersListModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="users.length === 0" class="empty-state">
+          <p>No users found.</p>
+        </div>
+        <div *ngIf="users.length > 0" class="table-container">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Type</th>
+                <th>Created At</th>
+                <th>Last Login</th>
+                <th>Reset Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of users; let i = index" [class.admin-row]="user.is_admin">
+                <td>{{ i + 1 }}</td>
+                <td>
+                  <strong>{{ user.username }}</strong>
+                </td>
+                <td>
+                  <span class="badge" [class.admin-badge]="user.is_admin">
+                    {{ getUserTypeLabel(user) }}
+                  </span>
+                </td>
+                <td>{{ formatDate(user.created_at) }}</td>
+                <td>{{ formatDate(user.last_login_time) }}</td>
+                <td>
+                  <span class="badge" [class.badge-warning]="user.forgot_request_status === 'pending'">
+                    {{ user.forgot_request_status || 'N/A' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeUsersListModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div *ngIf="showResetPasswordModal" class="modal-overlay" (click)="closeResetPasswordModal()">
+    <div class="modal-content large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>🔄 Password Reset Requests</h3>
+        <button class="close-btn" (click)="closeResetPasswordModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="resetRequests.length === 0" class="empty-state">
+          <div class="empty-icon">✅</div>
+          <p>No password reset requests at the moment.</p>
+          <p class="empty-subtext">All requests have been handled!</p>
+        </div>
+       
+        <div *ngIf="resetRequests.length > 0">
+          <div class="alert alert-info">
+            <strong>📨 {{ resetRequests.length }}</strong> password reset request(s) pending
+          </div>
+          <div class="table-container">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Requested At</th>
+                  <th>Status</th>
+                  <th>Admin Note</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let request of resetRequests"
+                    [class.selected-row]="selectedResetRequest?.user_id === request.user_id">
+                  <td><strong>{{ request.username }}</strong></td>
+                  <td>{{ formatDate(request.requested_at) }}</td>
+                  <td>
+                    <span class="badge badge-warning">{{ request.status }}</span>
+                  </td>
+                  <td>{{ request.admin_note || 'N/A' }}</td>
+                  <td>
+                    <button
+                      class="btn-small"
+                      (click)="selectUserForReset(request)"
+                      [class.selected]="selectedResetRequest?.user_id === request.user_id"
+                      [disabled]="isLoading"
+                    >
+                      {{ selectedResetRequest?.user_id === request.user_id ? '✓ Selected' : 'Select' }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div *ngIf="selectedResetRequest" class="reset-form">
+            <h4>🔐 Reset Password for: <span class="highlight">{{ selectedResetRequest.username }}</span></h4>
+            <div class="form-group">
+              <label>New Password</label>
+              <input
+                type="password"
+                [(ngModel)]="newResetPassword"
+                placeholder="Enter new password for user"
+                [disabled]="isLoading"
+              />
+            </div>
+            <button class="btn-primary" (click)="resetUserPassword()" [disabled]="isLoading">
+              {{ isLoading ? 'Resetting...' : '🔄 Reset Password & Send to User' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeResetPasswordModal()" [disabled]="isLoading">Close</button>
+      </div>
+    </div>
   </div>
 </div>

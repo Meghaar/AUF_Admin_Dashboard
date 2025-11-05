@@ -66,6 +66,7 @@ def admin_required(fn):
 def login():
     data = request.json or {}
     username = data.get("username")
+    is_admin=data.get("is_admin")
     password = data.get("password")
     if not username or not password:
         return jsonify({"error": "username and password required"}), 400
@@ -73,6 +74,10 @@ def login():
     db = get_db()
     cur = db.execute("SELECT slno, username, password, is_admin FROM users WHERE username = ?", (username,))
     row = cur.fetchone()
+    if is_admin:
+        if row["is_admin"] == 0:
+            return jsonify({"error": "Admin authorization"}), 401
+
     if not row:
         return jsonify({"error": "invalid credentials"}), 401
 
@@ -97,12 +102,13 @@ def change_password():
     data = request.json or {}
     old = data.get("old_password")
     new = data.get("new_password")
+    username = data.get("username")
     if not old or not new:
         return jsonify({"error": "old_password and new_password required"}), 400
 
-    user_id = request.user["user_id"]
+    # user_id = request.user["slno"]
     db = get_db()
-    cur = db.execute("SELECT password FROM users WHERE slno = ?", (user_id,))
+    cur = db.execute("SELECT password FROM users WHERE username = ?", (username,))
     row = cur.fetchone()
     if not row:
         return jsonify({"error": "user not found"}), 404
@@ -111,8 +117,8 @@ def change_password():
         return jsonify({"error": "old password incorrect"}), 401
 
     db.execute(
-        "UPDATE users SET password = ?, reset_password_time = ? WHERE slno = ?",
-        (generate_password_hash(new), datetime.datetime.now(), user_id)
+        "UPDATE users SET password = ?, reset_password_time = ? WHERE username = ?",
+        (generate_password_hash(new), datetime.datetime.now(), username)
     )
     db.commit()
     return jsonify({"message": "password updated"})
