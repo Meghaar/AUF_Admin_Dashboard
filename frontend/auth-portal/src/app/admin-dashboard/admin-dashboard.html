@@ -1,3 +1,4 @@
+<div class="main">
 <div class="admin-container">
   <!-- Loading Overlay -->
   <div *ngIf="isLoading" class="loading-overlay">
@@ -47,38 +48,41 @@
       </form>
     </div>
   </div>
-
   <!-- Admin Dashboard -->
   <div *ngIf="isLoggedIn" class="dashboard">
     <!-- Navbar -->
     <nav class="navbar">
-      <div class="nav-brand">
-        <h2>Admin Dashboard</h2>
-      </div>
+      <img
+          class="logo-svg"
+          src="https://th.bing.com/th/id/OIP.lg7RTg0TTxpp9WbMQiUT4wHaBM?w=374&h=60&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3"
+          alt="OpenText Logo - White"
+        />
       <div class="nav-links">
         <button (click)="openUpdateCredentialsModal()" class="nav-btn">
-          <span>🔑 Update Credentials</span>
+          <span>Update Credentials</span>
         </button>
         <button (click)="openCreateUserModal()" class="nav-btn">
-          <span>➕ Create User</span>
+          <span>Create User</span>
         </button>
         <button (click)="openUsersListModal()" class="nav-btn">
-          <span>👥 View Users ({{ getTotalUsers() }})</span>
+          <span>View Users ({{ getTotalUsers() }})</span>
         </button>
         <button (click)="openResetPasswordModal()" class="nav-btn">
-          <span>🔄 Reset Passwords</span>
+          <span>Reset Passwords</span>
           <span *ngIf="resetRequests.length > 0" class="badge">{{ resetRequests.length }}</span>
         </button>
         <button (click)="logout()" class="nav-btn logout-btn">
-          <span>🚪 Logout</span>
+          <span>Logout</span>
         </button>
+
       </div>
     </nav>
-
+      <div class="space"></div>
+      <div class="admin">AUF Admin Dashboard</div>
     <!-- Main Content -->
     <div class="main-content">
       <div class="welcome-section">
-        <h1>Welcome, {{ currentAdminUsername }}!</h1>
+        <h1>Welcome, Admin!</h1>
         <p>Manage users and handle password reset requests from this dashboard.</p>
       </div>
 
@@ -108,15 +112,15 @@
         <h2>Quick Actions</h2>
         <div class="action-buttons">
           <button class="action-btn" (click)="openCreateUserModal()">
-            <span class="action-icon">➕</span>
+            <span class="action-icon"></span>
             <span class="action-text">Create New User</span>
           </button>
           <button class="action-btn" (click)="openResetPasswordModal()">
-            <span class="action-icon">🔄</span>
+            <span class="action-icon"></span>
             <span class="action-text">Handle Reset Requests</span>
           </button>
           <button class="action-btn" (click)="openUsersListModal()">
-            <span class="action-icon">📋</span>
+            <span class="action-icon"></span>
             <span class="action-text">View All Users</span>
           </button>
         </div>
@@ -348,4 +352,5 @@
       </div>
     </div>
   </div>
+ </div>
 </div>
