@@ -66,14 +66,21 @@ def admin_required(fn):
 def login():
     data = request.json or {}
     username = data.get("username")
-    is_admin=data.get("is_admin")
+    is_admin = data.get("is_admin")
     password = data.get("password")
+    
     if not username or not password:
         return jsonify({"error": "username and password required"}), 400
 
     db = get_db()
-    cur = db.execute("SELECT slno, username, password, is_admin FROM users WHERE username = ?", (username,))
+    
+    # Select must_reset column to check if password change is required
+    cur = db.execute(
+        "SELECT slno, username, password, is_admin, must_reset FROM users WHERE username = ?", 
+        (username,)
+    )
     row = cur.fetchone()
+    
     if is_admin:
         if row["is_admin"] == 0:
             return jsonify({"error": "Admin authorization"}), 401
@@ -84,6 +91,9 @@ def login():
     if not check_password_hash(row["password"], password):
         return jsonify({"error": "invalid credentials"}), 401
 
+    # Check if user must reset password (admin reset scenario)
+    must_reset_password = row["must_reset"] if row["must_reset"] is not None else False
+    
     # Update last login time
     db.execute(
         "UPDATE users SET last_login_time = ? WHERE slno = ?",
@@ -91,9 +101,18 @@ def login():
     )
     db.commit()
 
-    user = {"slno": row["slno"], "username": row["username"], "is_admin": row["is_admin"]}
+    user = {
+        "slno": row["slno"], 
+        "username": row["username"], 
+        "is_admin": row["is_admin"],
+        "must_reset": must_reset_password  # Add this flag
+    }
     token = create_token(user)
-    return jsonify({"access_token": token, "user": user})
+    return jsonify({
+        "access_token": token, 
+        "user": user,
+        "must_reset": must_reset_password  # Also include in response
+    })
 
 def me():
     return jsonify({"user": request.user})
@@ -103,25 +122,27 @@ def change_password():
     old = data.get("old_password")
     new = data.get("new_password")
     username = data.get("username")
+    
     if not old or not new:
         return jsonify({"error": "old_password and new_password required"}), 400
 
-    # user_id = request.user["slno"]
     db = get_db()
-    cur = db.execute("SELECT password FROM users WHERE username = ?", (username,))
+    cur = db.execute("SELECT password, must_reset FROM users WHERE username = ?", (username,))
     row = cur.fetchone()
+    
     if not row:
         return jsonify({"error": "user not found"}), 404
 
     if not check_password_hash(row["password"], old):
         return jsonify({"error": "old password incorrect"}), 401
 
+    # Update password and clear the must_reset flag
     db.execute(
-        "UPDATE users SET password = ?, reset_password_time = ? WHERE username = ?",
+        "UPDATE users SET password = ?, reset_password_time = ?, must_reset = FALSE WHERE username = ?",
         (generate_password_hash(new), datetime.datetime.now(), username)
     )
     db.commit()
-    return jsonify({"message": "password updated"})
+    return jsonify({"message": "password updated", "success": True})
 
 def change_username():
     # Only allow admin to change username
@@ -164,6 +185,40 @@ def change_username():
     db.commit()
     
     return jsonify({"message": "username updated successfully"})
+
+def change_own_password():
+    # This endpoint uses the authenticated user from token
+    data = request.json or {}
+    old = data.get("old_password")
+    new = data.get("new_password")
+    
+    if not old or not new:
+        return jsonify({"success": False, "message": "old_password and new_password required"}), 400
+
+    user_id = request.user["user_id"]
+    username = request.user["username"]
+    
+    db = get_db()
+    cur = db.execute("SELECT password, must_reset FROM users WHERE slno = ?", (user_id,))
+    row = cur.fetchone()
+    
+    if not row:
+        return jsonify({"success": False, "message": "user not found"}), 404
+
+    if not check_password_hash(row["password"], old):
+        return jsonify({"success": False, "message": "old password incorrect"}), 401
+
+    # Update password and clear the must_reset flag
+    db.execute(
+        "UPDATE users SET password = ?, reset_password_time = ?, must_reset = FALSE WHERE slno = ?",
+        (generate_password_hash(new), datetime.datetime.now(), user_id)
+    )
+    db.commit()
+    
+    return jsonify({
+        "success": True,
+        "message": "password updated successfully"
+    })
 
 def forgot_request():
     data = request.json or {}

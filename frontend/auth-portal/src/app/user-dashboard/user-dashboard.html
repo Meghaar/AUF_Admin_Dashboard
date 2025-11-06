@@ -44,7 +44,7 @@
   </div>
 
   <!-- User Dashboard -->
-  <div *ngIf="isLoggedIn" class="dashboard">
+  <div *ngIf="isLoggedIn && !isMandatoryPasswordChange" class="dashboard">
     <!-- Navbar -->
     <nav class="navbar">
       <div class="nav-brand">
@@ -117,7 +117,7 @@
             [disabled]="isLoading"
           />
         </div>
-        <div class="form-group">
+        <!-- <div class="form-group">
           <label>Email</label>
           <input 
             type="email" 
@@ -125,7 +125,7 @@
             placeholder="Enter your email address"
             [disabled]="isLoading"
           />
-        </div>
+        </div> -->
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeForgotPasswordModal()" [disabled]="isLoading">Cancel</button>
@@ -137,13 +137,22 @@
   </div>
 
   <!-- Change Password Modal -->
-  <div *ngIf="showChangePasswordModal" class="modal-overlay" (click)="closeChangePasswordModal()">
+  <div *ngIf="showChangePasswordModal" class="modal-overlay">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>Change Password</h3>
-        <button class="close-btn" (click)="closeChangePasswordModal()">&times;</button>
+        <h3>
+          <span *ngIf="isMandatoryPasswordChange">🔐 </span>
+          {{ isMandatoryPasswordChange ? 'Password Change Required' : 'Change Password' }}
+        </h3>
+        <!-- Only show close button if not mandatory -->
+        <button *ngIf="!isMandatoryPasswordChange" class="close-btn" (click)="closeChangePasswordModal()">&times;</button>
       </div>
       <div class="modal-body">
+        <!-- Show warning message for mandatory change -->
+        <div *ngIf="isMandatoryPasswordChange" class="warning-message">
+          <p><strong>Security Notice:</strong> You must change your password before accessing the dashboard.</p>
+        </div>
+        
         <!-- Error Message -->
         <div *ngIf="changePasswordError" class="error-message">
           {{ changePasswordError }}
@@ -156,6 +165,7 @@
             [(ngModel)]="oldPassword" 
             placeholder="Enter old password"
             [disabled]="isLoading"
+            [readonly]="isMandatoryPasswordChange"
           />
         </div>
         <div class="form-group">
@@ -179,7 +189,7 @@
         <p class="info-text">Password must be at least 6 characters long.</p>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="closeChangePasswordModal()" [disabled]="isLoading">Cancel</button>
+        <button *ngIf="!isMandatoryPasswordChange" class="btn-secondary" (click)="closeChangePasswordModal()" [disabled]="isLoading">Cancel</button>
         <button class="btn-primary" (click)="changePassword()" [disabled]="isLoading">
           {{ isLoading ? 'Changing...' : 'Change Password' }}
         </button>

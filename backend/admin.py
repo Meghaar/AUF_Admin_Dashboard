@@ -80,8 +80,8 @@ def admin_create_user():
     # Create new user (non-admin by default)
     hashed_password = generate_password_hash(password)
     db.execute(
-        "INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)",
-        (username, hashed_password, False)
+        "INSERT INTO users (username, password, is_admin, must_reset) VALUES (?, ?, ?,?)",
+        (username, hashed_password, False, True)
     )
     db.commit()
     
@@ -116,7 +116,7 @@ def admin_reset_user_password():
         return jsonify({"error": "user not found"}), 404
 
     db.execute(
-        "UPDATE users SET password = ?, forgot_request_status = 'resolved', admin_note = ? WHERE slno = ?",
+        "UPDATE users SET password = ?, forgot_request_status = 'resolved',must_reset = TRUE, admin_note = ? WHERE slno = ?",
         (generate_password_hash(new_password), note, user_id)
     )
     db.commit()

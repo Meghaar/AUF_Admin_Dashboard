@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 interface User {
   slno: number;
@@ -36,6 +37,7 @@ interface UserLoginResponse {
   access_token: string;
   message: string;
   user?: any;
+  must_reset?: boolean;
 }
 
 interface PasswordChangeResponse {
@@ -57,7 +59,7 @@ export class ApiService {
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private router: Router) {
     const token = this.getToken();
     if (token) {
       // Token exists, user was previously logged in
@@ -75,15 +77,15 @@ export class ApiService {
 
   // Token management
   private getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    return sessionStorage.getItem(this.tokenKey);
   }
 
   private setToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
+    sessionStorage.setItem(this.tokenKey, token);
   }
 
   private removeToken(): void {
-    localStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.tokenKey);
   }
 
   // Check if user is logged in
@@ -96,7 +98,8 @@ export class ApiService {
   // Admin Login
   login(username: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, {
-      username: username,is_admin:true,
+      username: username,
+      is_admin: true,
       password: password
     }).pipe(
       tap(response => {
@@ -112,6 +115,7 @@ export class ApiService {
   logout(): void {
     this.removeToken();
     this.currentUserSubject.next(null);
+    console.log('Token removed, user logged out');
   }
 
   // Update Admin Credentials
@@ -180,25 +184,31 @@ export class ApiService {
         if (response.access_token) {
           this.setToken(response.access_token);
           this.currentUserSubject.next({ username, isUser: true });
+          console.log('User logged in, token stored');
         }
       })
     );
   }
 
-  // Change own password (Flask endpoint)
-  changeOwnPassword(username: string, oldpassword: string, newPassword: string): Observable<PasswordChangeResponse> {
-    return this.http.put<PasswordChangeResponse>(`${this.baseUrl}/change_password`, {
-      username,
-      old_password: oldpassword,
-      new_password: newPassword
-    });
+  // Change own password (Flask endpoint) - WITH AUTHORIZATION HEADER
+  changeOwnPassword(username: string, oldPassword: string, newPassword: string): Observable<ForgotPasswordResponse> {
+    return this.http.put<PasswordChangeResponse>(
+      `${this.baseUrl}/change_password`, 
+      {
+        username,
+        old_password: oldPassword,
+        new_password: newPassword
+      },
+      { 
+        headers: this.getHeaders()  // Added authorization header
+      }
+    )
   }
 
   // Forgot password request (Flask endpoint)
-  requestPasswordReset(username: string, email: string): Observable<ForgotPasswordResponse> {
+  requestPasswordReset(username: string): Observable<ForgotPasswordResponse> {
     return this.http.post<ForgotPasswordResponse>(`${this.baseUrl}/forgot_request`, {
       username: username,
-      email: email
     });
   }
 

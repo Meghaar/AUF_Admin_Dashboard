@@ -117,7 +117,7 @@ loadUsers() {
     this.api.login(this.username, this.password).subscribe({
       next: (response) => {
         console.log(response)
-        localStorage.setItem('admin_token',response.access_token)
+        sessionStorage.setItem('admin_token',response.access_token)
         this.isLoggedIn = true;
         this.currentAdminUsername = this.username;
         this.loadData();
