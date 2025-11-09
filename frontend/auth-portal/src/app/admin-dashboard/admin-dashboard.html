@@ -51,33 +51,43 @@
   <!-- Admin Dashboard -->
   <div *ngIf="isLoggedIn" class="dashboard">
     <!-- Navbar -->
-    <nav class="navbar">
-      <img
-          class="logo-svg"
-          src="https://th.bing.com/th/id/OIP.lg7RTg0TTxpp9WbMQiUT4wHaBM?w=374&h=60&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3"
-          alt="OpenText Logo - White"
-        />
-      <div class="nav-links">
-        <button (click)="openUpdateCredentialsModal()" class="nav-btn">
-          <span>Update Credentials</span>
-        </button>
-        <button (click)="openCreateUserModal()" class="nav-btn">
-          <span>Create User</span>
-        </button>
-        <button (click)="openUsersListModal()" class="nav-btn">
-          <span>View Users ({{ getTotalUsers() }})</span>
-        </button>
-        <button (click)="openResetPasswordModal()" class="nav-btn">
-          <span>Reset Passwords</span>
-          <span *ngIf="resetRequests.length > 0" class="badge">{{ resetRequests.length }}</span>
-        </button>
-        <button (click)="logout()" class="nav-btn logout-btn">
+    <!-- Navbar -->
+<nav class="navbar">
+   <img
+      class="logo-svg"
+      src="https://th.bing.com/th/id/OIP.lg7RTg0TTxpp9WbMQiUT4wHaBM?w=374&h=60&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3"
+      alt="OpenText Logo - White"
+    />
+  <div class="nav-links">
+    <button (click)="openUpdateCredentialsModal()" class="nav-btn">
+      <span>Update Credentials</span>
+    </button>
+    <button (click)="openCreateUserModal()" class="nav-btn">
+      <span>Create User</span>
+    </button>
+    <button (click)="openUsersListModal()" class="nav-btn">
+      <span>View Users ({{ getTotalUsers() }})</span>
+    </button>
+    <button (click)="openResetPasswordModal()" class="nav-btn">
+      <span>Reset Passwords</span>
+      <span *ngIf="resetRequests.length > 0" class="badge">{{ resetRequests.length }}</span>
+    </button>
+    
+    <!-- Updated Account Button with Dropdown -->
+    <div class="account-dropdown">
+      <button (click)="toggleLogoutDropdown()" class="nav-btn logout-btn">
+        <span>Account</span>
+      </button>
+      <div *ngIf="showLogoutDropdown" class="dropdown-menu">
+        <button (click)="logout()" class="dropdown-item">
           <span>Logout</span>
         </button>
-
       </div>
-    </nav>
-      <div class="space"></div>
+    </div>
+  </div>
+</nav>
+    
+    <div class="space"></div>
       <div class="admin">AUF Admin Dashboard</div>
     <!-- Main Content -->
     <div class="main-content">
