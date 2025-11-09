@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api';
- 
+
 interface User {
   slno: number;
   username: string;
@@ -16,7 +16,7 @@ interface User {
   forgot_request_time: string;
   admin_note: string;
 }
- 
+
 interface ResetRequest {
   user_id: number;
   username: string;
@@ -24,7 +24,7 @@ interface ResetRequest {
   status: string;
   admin_note: string;
 }
- 
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -42,6 +42,8 @@ export class AdminDashboardComponent implements OnInit {
   showCreateUserModal = false;
   showUsersListModal = false;
   showResetPasswordModal = false;
+  // Add missing property for logout dropdown
+  showLogoutDropdown = false;
   // Update credentials form
   currentPassword = '';
   newAdminUsername = '';
@@ -56,9 +58,9 @@ export class AdminDashboardComponent implements OnInit {
   currentAdminUsername = '';
   selectedResetRequest: ResetRequest | null = null;
   newResetPassword = '';
- 
+
   constructor(private api: ApiService) {}
- 
+
   ngOnInit() {
     // Check if already logged in
     if (this.api.isLoggedIn()) {
@@ -66,35 +68,35 @@ export class AdminDashboardComponent implements OnInit {
       this.loadData();
     }
   }
- 
+
   loadData() {
     this.loadUsers();
     this.loadResetRequests();
   }
- 
-loadUsers() {
-  this.api.getAllUsers().subscribe({
-    next: (response) => {
-      this.users = response.users as any; // Quick fix
-      // Or more specifically:
-      // this.users = response.users as User[];
-      
-      // Find admin username
-      const admin = this.users.find(u => u.is_admin);
-      if (admin) {
-        this.currentAdminUsername = admin.username;
+
+  loadUsers() {
+    this.api.getAllUsers().subscribe({
+      next: (response) => {
+        this.users = response.users as any; // Quick fix
+        // Or more specifically:
+        // this.users = response.users as User[];
+        
+        // Find admin username
+        const admin = this.users.find(u => u.is_admin);
+        if (admin) {
+          this.currentAdminUsername = admin.username;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading users:', error);
+        if (error.status === 401) {
+          alert('Session expired. Please login again.');
+          this.logout();
+        }
       }
-    },
-    error: (error) => {
-      console.error('Error loading users:', error);
-      if (error.status === 401) {
-        alert('Session expired. Please login again.');
-        this.logout();
-      }
-    }
-  });
-}
- 
+    });
+  }
+
   loadResetRequests() {
     this.api.getResetRequests().subscribe({
       next: (response) => {
@@ -105,14 +107,14 @@ loadUsers() {
       }
     });
   }
- 
+
   // Login with credentials
   login() {
     if (!this.username || !this.password) {
       alert('Please enter username and password');
       return;
     }
- 
+
     this.isLoading = true;
     this.api.login(this.username, this.password).subscribe({
       next: (response) => {
@@ -135,7 +137,12 @@ loadUsers() {
       }
     });
   }
- 
+
+  // Add missing method for logout dropdown
+  toggleLogoutDropdown() {
+    this.showLogoutDropdown = !this.showLogoutDropdown;
+  }
+
   // Open Update Credentials Modal
   openUpdateCredentialsModal() {
     this.showUpdateCredentialsModal = true;
@@ -144,14 +151,14 @@ loadUsers() {
     this.newAdminPassword = '';
     this.confirmAdminPassword = '';
   }
- 
+
   // Update Admin Credentials
   updateAdminCredentials() {
     if (!this.currentPassword) {
       alert('Please enter your current password.');
       return;
     }
- 
+
     if (!this.newAdminUsername && !this.newAdminPassword) {
       alert('Please enter at least new username or new password.');
       return;
@@ -160,7 +167,7 @@ loadUsers() {
       alert('New passwords do not match!');
       return;
     }
- 
+
     this.isLoading = true;
     this.api.updateAdminCredentials(
       this.currentPassword,
@@ -171,10 +178,10 @@ loadUsers() {
         this.isLoading = false;
         const updatedUsername = this.newAdminUsername || this.currentAdminUsername;
         alert(`✅ Admin credentials updated successfully!
- 
+
 ${this.newAdminUsername ? `New Username: ${this.newAdminUsername}` : ''}
 ${this.newAdminPassword ? `New Password: ${this.newAdminPassword}` : ''}
- 
+
 Please use these credentials for your next login.`);
         this.currentAdminUsername = updatedUsername;
         this.closeUpdateCredentialsModal();
@@ -191,25 +198,25 @@ Please use these credentials for your next login.`);
       }
     });
   }
- 
+
   closeUpdateCredentialsModal() {
     this.showUpdateCredentialsModal = false;
   }
- 
+
   // Open Create User Modal
   openCreateUserModal() {
     this.showCreateUserModal = true;
     this.newUsername = '';
     this.newPassword = '';
   }
- 
+
   // Create new user
   createUser() {
     if (!this.newUsername || !this.newPassword) {
       alert('Please fill in all fields.');
       return;
     }
- 
+
     this.isLoading = true;
     this.api.createUser(this.newUsername, this.newPassword).subscribe({
       next: (response) => {
@@ -218,7 +225,7 @@ Please use these credentials for your next login.`);
         alert(`✅ User Created Successfully!
 Username: ${this.newUsername}
 Password: ${this.newPassword}
- 
+
 ✓ User has been added to the system
 ✓ User can now login immediately with these credentials
 ✓ Please share these credentials with the user securely`);
@@ -235,28 +242,28 @@ Password: ${this.newPassword}
       }
     });
   }
- 
+
   closeCreateUserModal() {
     this.showCreateUserModal = false;
     this.newUsername = '';
     this.newPassword = '';
   }
- 
+
   // Open Users List Modal
   openUsersListModal() {
     this.loadUsers(); // Refresh data
     this.showUsersListModal = true;
   }
- 
+
   closeUsersListModal() {
     this.showUsersListModal = false;
   }
- 
+
   // Get total user count
   getTotalUsers(): number {
     return this.users.length;
   }
- 
+
   // Open Reset Password Modal
   openResetPasswordModal() {
     this.loadResetRequests(); // Refresh reset requests
@@ -264,20 +271,20 @@ Password: ${this.newPassword}
     this.selectedResetRequest = null;
     this.newResetPassword = '';
   }
- 
+
   // Select user for password reset
   selectUserForReset(request: ResetRequest) {
     this.selectedResetRequest = request;
     this.newResetPassword = '';
   }
- 
+
   // Reset user password
   resetUserPassword() {
     if (!this.selectedResetRequest || !this.newResetPassword) {
       alert('Please select a user and enter a new password.');
       return;
     }
- 
+
     this.isLoading = true;
     this.api.resetUserPassword(
       this.selectedResetRequest.user_id,
@@ -288,10 +295,10 @@ Password: ${this.newPassword}
         this.isLoading = false;
         this.loadData(); // Refresh data
         alert(`✅ Password Reset Successfully!
- 
+
 Username: ${this.selectedResetRequest!.username}
 New Password: ${this.newResetPassword}
- 
+
 The user can now login with these new credentials.
 Please send these credentials to the user.`);
         this.selectedResetRequest = null;
@@ -309,13 +316,13 @@ Please send these credentials to the user.`);
       }
     });
   }
- 
+
   closeResetPasswordModal() {
     this.showResetPasswordModal = false;
     this.selectedResetRequest = null;
     this.newResetPassword = '';
   }
- 
+
   // Logout
   logout() {
     this.api.logout();
@@ -325,14 +332,15 @@ Please send these credentials to the user.`);
     this.users = [];
     this.resetRequests = [];
     this.currentAdminUsername = '';
+    this.showLogoutDropdown = false; // Close dropdown on logout
   }
- 
+
   // Format date helper
   formatDate(dateString: string): string {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString();
   }
- 
+
   // Get user type label
   getUserTypeLabel(user: User): string {
     return user.is_admin ? '👑 Admin' : '👤 User';
